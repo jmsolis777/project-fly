@@ -1,10 +1,9 @@
 provider "aws" {
-  region = "us-west-2"
+  region = var.region
 }
 
-# Crear VPC
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
   enable_dns_support = true
   enable_dns_hostnames = true
   tags = {
@@ -12,28 +11,25 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Crear Subnet pública
 resource "aws_subnet" "subnet_a" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-west-2a"
+  cidr_block        = var.subnet_cidr
+  availability_zone = "us-east-1b"
   map_public_ip_on_launch = true
   tags = {
     Name = "subnet-a"
   }
 }
 
-# Crear Subnet privada
 resource "aws_subnet" "subnet_b" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-west-2b"
+  cidr_block        = "10.0.2.0/24"  # Puedes reemplazar esta línea con una variable si deseas más flexibilidad
+  availability_zone = "us-east-1c"
   tags = {
     Name = "subnet-b"
   }
 }
 
-# Crear IAM Role para EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {
   name = "eks-cluster-role"
   
@@ -51,21 +47,18 @@ resource "aws_iam_role" "eks_cluster_role" {
   })
 }
 
-# Adjuntar la política de EKS Cluster al rol
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.eks_cluster_role.name
 }
 
-# Adjuntar la política de Amazon VPC al rol
 resource "aws_iam_role_policy_attachment" "eks_vpc_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
   role       = aws_iam_role.eks_cluster_role.name
 }
 
-# Crear un EKS Cluster
 resource "aws_eks_cluster" "main" {
-  name     = "my-cluster"
+  name     = var.eks_cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
   vpc_config {
     subnet_ids = [
@@ -77,21 +70,18 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
 }
 
-# Crear bucket S3
-resource "aws_s3_bucket" "my_bucket" {
-  bucket = "my-unique-bucket-name"
+resource "aws_s3_bucket" "project_fly_bucket" {
+  bucket = "project-fly-bucket"
   tags = {
-    Name = "my-bucket"
+    Name = "project-fly-bucket"
   }
 }
 
-# Crear ACL para el bucket S3
-resource "aws_s3_bucket_acl" "my_bucket_acl" {
-  bucket = aws_s3_bucket.my_bucket.bucket
+resource "aws_s3_bucket_acl" "project_fly_bucket_acl" {
+  bucket = aws_s3_bucket.project_fly_bucket.bucket
   acl    = "private"
 }
 
-# Crear repositorio ECR
-resource "aws_ecr_repository" "my_repo" {
-  name = "my-repository"
+resource "aws_ecr_repository" "project_fly_repository" {
+  name = "project-fly-repository"
 }

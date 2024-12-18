@@ -7,9 +7,9 @@ output "eks_cluster_endpoint" {
 }
 
 output "s3_bucket_name" {
-  value = aws_s3_bucket.my_bucket.bucket
+  value = aws_s3_bucket.project_fly_bucket.bucket
 }
 
 output "ecr_repository_url" {
-  value = aws_ecr_repository.my_repo.repository_url
+  value = aws_ecr_repository.project_fly_repository.repository_url
 }
